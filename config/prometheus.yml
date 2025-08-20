@@ -1,0 +1,103 @@
+# Prometheus configuration for logistics routing system
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'logistics-routing-system'
+
+rule_files:
+  - "alert_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Logistics API application
+  - job_name: 'logistics-api'
+    static_configs:
+      - targets: ['logistics-api:9464']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    honor_labels: true
+
+  # Node exporter for system metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 15s
+
+  # PostgreSQL exporter
+  - job_name: 'postgres-exporter'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    scrape_interval: 15s
+
+  # Redis exporter
+  - job_name: 'redis-exporter'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    scrape_interval: 15s
+
+  # Nginx exporter
+  - job_name: 'nginx-exporter'
+    static_configs:
+      - targets: ['nginx-exporter:9113']
+    scrape_interval: 15s
+
+  # Custom application metrics
+  - job_name: 'logistics-business-metrics'
+    static_configs:
+      - targets: ['logistics-api:3000']
+    metrics_path: '/api/metrics/business'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # Health check monitoring
+  - job_name: 'logistics-health'
+    static_configs:
+      - targets: ['logistics-api:3000']
+    metrics_path: '/api/health/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 5s
+
+  # External API monitoring
+  - job_name: 'external-apis'
+    static_configs:
+      - targets: ['logistics-api:3000']
+    metrics_path: '/api/metrics/external-apis'
+    scrape_interval: 60s
+    scrape_timeout: 10s
+
+  # Route optimization performance
+  - job_name: 'route-optimization'
+    static_configs:
+      - targets: ['logistics-api:3000']
+    metrics_path: '/api/metrics/routing'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # Delhi compliance metrics
+  - job_name: 'delhi-compliance'
+    static_configs:
+      - targets: ['logistics-api:3000']
+    metrics_path: '/api/metrics/compliance'
+    scrape_interval: 60s
+    scrape_timeout: 10s
+
+  # Customer loyalty metrics
+  - job_name: 'customer-loyalty'
+    static_configs:
+      - targets: ['logistics-api:3000']
+    metrics_path: '/api/metrics/loyalty'
+    scrape_interval: 300s
+    scrape_timeout: 15s

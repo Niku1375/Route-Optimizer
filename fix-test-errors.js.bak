@@ -1,0 +1,86 @@
+// Script to fix all test errors systematically
+const fs = require('fs');
+const path = require('path');
+
+// Fix Vehicle capacity issues - add maxDimensions
+function fixVehicleCapacity(content) {
+  return content.replace(
+    /capacity:\s*{\s*weight:\s*(\d+),\s*volume:\s*(\d+)\s*}/g,
+    'capacity: { weight: $1, volume: $2, maxDimensions: { length: 6, width: 2.5, height: 3 } }'
+  );
+}
+
+// Fix VehicleSpecs - add manufacturingYear
+function fixVehicleSpecs(content) {
+  return content.replace(
+    /(vehicleSpecs:\s*{\s*plateNumber:\s*'[^']+',\s*fuelType:\s*'[^']+',\s*vehicleAge:\s*\d+,\s*registrationState:\s*'[^']+'\s*})/g,
+    (match) => match.replace('}', ', manufacturingYear: 2021 }')
+  );
+}
+
+// Fix DriverInfo - add missing properties
+function fixDriverInfo(content) {
+  return content.replace(
+    /(driverInfo:\s*{\s*id:\s*'[^']+',\s*workingHours:\s*\d+,\s*maxWorkingHours:\s*\d+\s*})/g,
+    (match) => match.replace('}', ', name: "Test Driver", licenseNumber: "DL123456789", contactNumber: "+91-9876543210" }')
+  );
+}
+
+// Fix Hub capacity - replace vehicles with proper HubCapacity structure
+function fixHubCapacity(content) {
+  return content.replace(
+    /capacity:\s*{\s*vehicles:\s*(\d+),\s*storage:\s*(\d+)\s*}/g,
+    'capacity: { maxVehicles: $1, currentVehicles: 10, storageArea: $2, loadingBays: 5, bufferVehicleSlots: 8 }'
+  );
+}
+
+// Fix Hub operatingHours - add timezone
+function fixHubOperatingHours(content) {
+  return content.replace(
+    /(operatingHours:\s*{\s*open:\s*'[^']+',\s*close:\s*'[^']+'\s*})/g,
+    (match) => match.replace('}', ', timezone: "Asia/Kolkata" }')
+  );
+}
+
+// Fix RouteStop properties - estimatedArrival -> estimatedArrivalTime
+function fixRouteStopProperties(content) {
+  return content.replace(/estimatedArrival:/g, 'estimatedArrivalTime:')
+           .replace(/estimatedDeparture:/g, 'estimatedDepartureTime:');
+}
+
+// Fix ShipmentDetails - add missing properties
+function fixShipmentDetails(content) {
+  return content.replace(
+    /(shipment:\s*{\s*weight:\s*\d+,\s*volume:\s*\d+,\s*fragile:\s*\w+,\s*specialHandling:\s*\[[^\]]*\]\s*})/g,
+    (match) => match.replace('}', ', hazardous: false, temperatureControlled: false }')
+  );
+}
+
+console.log('Starting test error fixes...');
+
+// Files to fix
+const filesToFix = [
+  'src/services/__tests__/MapVisualizationService.test.ts',
+  'src/services/__tests__/RealTimeRouteOptimizer.test.ts', 
+  'src/services/__tests__/FallbackHeuristicService.integration.test.ts'
+];
+
+filesToFix.forEach(filePath => {
+  if (fs.existsSync(filePath)) {
+    console.log(`Fixing ${filePath}...`);
+    let content = fs.readFileSync(filePath, 'utf8');
+    
+    content = fixVehicleCapacity(content);
+    content = fixVehicleSpecs(content);
+    content = fixDriverInfo(content);
+    content = fixHubCapacity(content);
+    content = fixHubOperatingHours(content);
+    content = fixRouteStopProperties(content);
+    content = fixShipmentDetails(content);
+    
+    fs.writeFileSync(filePath, content);
+    console.log(`Fixed ${filePath}`);
+  }
+});
+
+console.log('Test error fixes completed!');
